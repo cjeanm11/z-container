@@ -1,0 +1,33 @@
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Git-related files
+.git
+.gitignore
+
+# Ignore object files, static libraries, shared libraries, and build artifacts
+*.o
+*.a
+*.so
+*.zig.o
+*.zig.a
+
+# Ignore compiled Zig binaries
+zig-out/
+
+# Ignore compressed files and logs
+*.tar.xz
+*.log
+
+# Ignore environment files
+.env
+
+# Ignore swap files and temporary files
+*.swp
+*.tmp
+
+# Ignore editor and IDE specific files
+.vscode/
+.idea/
+*.sublime-workspace

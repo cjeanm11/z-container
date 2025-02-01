@@ -1,32 +1,35 @@
-# Prerequisites
-*.d
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
 
-# Compiled Object files
-*.slo
-*.lo
+# Ignore Zig build directories and compiled output
+zig-cache/
+.zig-cache/
+zig-out/
+*.zig.o
+*.zig.a
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
-*.lib
+*.so
 
-# Executables
-*.exe
-*.out
-*.app
+# Ignore the .env file for sensitive data
+.env
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Ignore temporary files and backup files
+*.swp
+*.tmp
+
+# Ignore Git-related files and personal configurations
+.gitconfig
+.gitmodules
+
+# Ignore dependency manager files (if using any)
+.build/
+
+# Ignore logs
+*.log

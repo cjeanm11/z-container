@@ -1,0 +1,57 @@
+#!/bin/sh
+
+set -eux
+
+TARGET_DIR="/usr/local/bin/zig"
+
+usage() {
+    echo "Usage: $0 COMMAND"
+    echo
+    echo "Manage Zig binary packages"
+    echo
+    echo "Commands:"
+    echo "  fetch URL SHA256    Fetch a Zig binary package from the given URL with the given SHA256 hash"
+    echo "  extract             Extract the Zig binary package into the directory $TARGET_DIR if not already extracted"
+}
+
+fetch() {
+    local url="$1"
+    local sha256="$2"
+
+    apk add --no-cache --virtual .fetch-deps curl \
+        && curl -s -o /usr/src/zig.tar.xz "$url" \
+        && echo "$sha256 *zig.tar.xz" | sha256sum -c - \
+        && apk del .fetch-deps
+}
+
+extract() {
+    apk add --no-cache --virtual .extract-deps tar xz
+    mkdir -p "$TARGET_DIR"
+    if [ ! -f "$TARGET_DIR/.extracted" ]; then
+        tar -Jxf /usr/src/zig.tar.xz -C "$TARGET_DIR" --strip-components=1
+        touch "$TARGET_DIR/.extracted"
+    fi
+
+    rm /usr/src/zig.tar.xz
+    apk del .extract-deps
+}
+
+case "$1" in
+    fetch)
+        if [ -z "$2" ] || [ -z "$3" ]; then
+            echo "Error: URL and SHA256 are required for fetch."
+            usage
+            exit 1
+        fi
+        fetch "$2" "$3"
+        ;;
+    
+    extract)
+        extract
+        ;;
+
+    *)
+        usage
+        exit 1
+        ;;
+esac
