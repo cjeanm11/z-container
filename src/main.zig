@@ -1,5 +1,10 @@
 const std = @import("std");
 const syscalls = @import("syscalls.zig");
+const builtin = @import("builtin");
+
+comptime {
+    if (builtin.os.tag != .linux) @compileError("This program only supports Linux.");
+}
 
 pub fn main() !void {
     std.debug.print("> Starting Zig container...\n", .{});
