@@ -2,9 +2,6 @@ const std = @import("std");
 const linux = std.os.linux;
 const builtin = @import("builtin");
 
-comptime {
-    if (builtin.os.tag != .linux) @compileError("This program only supports Linux.");
-}
 
 pub const CLONE_NEWPID = linux.CLONE.NEWPID;
 pub const CLONE_NEWNS = linux.CLONE.NEWNS;
@@ -43,8 +40,25 @@ pub fn umount(target: [*:0]const u8, flags: c_int) !void {
 }
 
 pub fn create_cgroup(name: [*:0]const u8) !void {
-    const path = try std.fmt.allocPrint(std.heap.page_allocator, "/sys/fs/cgroup/{s}", .{name});
+    const base_paths = [_][]const u8{ "/sys/fs/cgroup", "/sys/fs/cgroup/user.slice", "/tmp/cgroup" };
+    
+    var base_path: ?[]const u8 = null;
+    
+    for (base_paths) |path| {
+        if (std.fs.cwd().makePath(path) catch |err| err == error.ReadOnlyFileSystem) {
+            continue;
+        }
+        base_path = path;
+        break;
+    }
+
+    if (base_path == null) {
+        return error.CgroupUnavailable;
+    }
+
+    const path = try std.fmt.allocPrint(std.heap.page_allocator, "{s}/{s}", .{ base_path.?, name });
     defer std.heap.page_allocator.free(path);
+
     try std.fs.cwd().makePath(path);
 }
 
