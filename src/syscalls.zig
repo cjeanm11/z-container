@@ -63,14 +63,37 @@ pub fn create_cgroup(name: [*:0]const u8) !void {
 }
 
 pub fn set_cgroup_limit(cgroup: [*:0]const u8, file: [*:0]const u8, value: []const u8) !void {
-    const path = try std.fmt.allocPrint(std.heap.page_allocator, "/sys/fs/cgroup/{s}/{s}", .{cgroup, file});
-    defer std.heap.page_allocator.free(path);
+    const allocator = std.heap.page_allocator;
+    const base_paths = [_][]const u8{ "/sys/fs/cgroup", "/sys/fs/cgroup/user.slice", "/tmp/cgroup" };
+    var base_path: ?[]const u8 = null;
 
-    var file_handle = try std.fs.cwd().openFile(path, .{ .mode = .write_only });
-    defer file_handle.close();
+    for (base_paths) |path| {
+        if (std.fs.cwd().makePath(path) catch |err| err == error.ReadOnlyFileSystem) {
+            continue;
+        }
+        base_path = path;
+        break;
+    }
 
-    try file_handle.writeAll(value);
+    if (base_path == null) {
+        base_path = "/tmp/cgroup";
+        try std.fs.cwd().makePath(base_path.?);
+    }
+
+    const path = try std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ base_path.?, cgroup, file });
+    defer allocator.free(path);
+
+    const file_handle = std.fs.cwd().openFile(path, .{ .mode = .write_only });
+    if (file_handle) |f| {
+        defer f.close();
+        try f.writeAll(value);
+        std.debug.print("Set cgroup limit: {s} -> {s}\n", .{ path, value });
+    } else |err| {
+        std.debug.print("Failed to open cgroup file: {s} (Error: {s})\n", .{ path, @errorName(err) });
+        return err;
+    }
 }
+
 
 pub fn add_process_to_cgroup(cgroup: [*:0]const u8) !void {
     const path = try std.fmt.allocPrint(std.heap.page_allocator, "/sys/fs/cgroup/{s}/cgroup.procs", .{cgroup});
